@@ -394,6 +394,42 @@ button,input,textarea,select{font-family:inherit;cursor:pointer}
   </div>
 </div>
 
+<!-- EDIT PROFILE MODAL -->
+<div class="mback" id="editProfileModal" onclick="outsideClose(event,'editProfileModal')">
+  <div class="msheet" style="max-height:90vh">
+    <div class="mhandle"></div>
+    <button class="mclose" onclick="closeModal('editProfileModal')">✕</button>
+    <div class="mtitle">✏️ Mon Profil</div>
+    <div class="mscroll">
+      <!-- Avatar emoji picker -->
+      <div style="text-align:center;margin-bottom:16px">
+        <div id="editAvPreview" style="width:80px;height:80px;border-radius:22px;background:linear-gradient(135deg,var(--or),#d63190);display:flex;align-items:center;justify-content:center;font-size:38px;margin:0 auto 10px;cursor:pointer;border:2px solid var(--or)">👤</div>
+        <div style="font-size:12px;color:var(--gr);margin-bottom:8px">Choisis ton avatar</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">
+          ${['👤','👨🏾','👩🏾','🧑🏾','👨🏿','👩🏿','🧔🏾','👸🏾','🤴🏾','🦸🏾','🦹🏾','🎭'].map(e=>`<button onclick="selectAvatar('${e}')" style="width:42px;height:42px;border-radius:12px;border:1.5px solid #2e2e2e;background:var(--dk3);font-size:22px;cursor:pointer">${e}</button>`).join('')}
+        </div>
+      </div>
+      <div class="ff" style="margin-bottom:10px">
+        <div class="fl">Nom affiché *</div>
+        <input id="editName" class="auth-inp" style="margin:0" placeholder="ex: Dieudonné Konan"/>
+      </div>
+      <div class="ff" style="margin-bottom:10px">
+        <div class="fl">Bio</div>
+        <textarea id="editBio" style="width:100%;background:var(--dk3);border:1.5px solid #2e2e2e;border-radius:14px;padding:12px 14px;color:#fff;font-size:14px;outline:none;resize:none;min-height:70px;font-family:'DM Sans',sans-serif" placeholder="Passionné(e) de mode africaine…"></textarea>
+      </div>
+      <div class="ff" style="margin-bottom:10px">
+        <div class="fl">Commune / Ville</div>
+        <input id="editCommune" class="auth-inp" style="margin:0" placeholder="ex: Cocody, Abidjan"/>
+      </div>
+      <div class="ff" style="margin-bottom:16px">
+        <div class="fl">Numéro WhatsApp</div>
+        <input id="editWhatsapp" class="auth-inp" style="margin:0" type="tel" placeholder="+225 07 00 00 00 00"/>
+      </div>
+      <button onclick="saveProfile()" class="auth-btn" style="margin:0">💾 Enregistrer le profil</button>
+    </div>
+  </div>
+</div>
+
 <!-- PAYMENT MODAL -->
 <div class="mback" id="payModal" onclick="outsideClose(event,'payModal')">
   <div class="msheet">
@@ -543,11 +579,12 @@ button,input,textarea,select{font-family:inherit;cursor:pointer}
       <div class="pw" style="padding-top:0">
         <div class="prof-body">
           <div class="prof-av-row">
-            <div class="prof-av" id="profAv" style="background:linear-gradient(135deg,var(--or),#d63190)">👤</div>
-            <div>
+            <div class="prof-av" id="profAv" style="background:linear-gradient(135deg,var(--or),#d63190);cursor:pointer" onclick="openEditProfile()">👤</div>
+            <div style="flex:1">
               <div class="prof-name" id="profName">Invité</div>
               <div class="prof-sub" id="profSub">Non connecté</div>
             </div>
+            <button onclick="openEditProfile()" style="background:var(--dk3);border:1px solid #2e2e2e;color:#ccc;padding:7px 14px;border-radius:12px;font-size:12px;font-weight:600">✏️ Modifier</button>
           </div>
           <div class="pm-row">
             <div class="pmet"><div class="pmv" id="profOrders">0</div><div class="pml">Commandes</div></div>
@@ -778,6 +815,7 @@ let activeFilter='Tous',sortBy='popular';
 let viewTimers={},extraComments={},currentUser=null,userRole='client';
 let confirmResult=null,myOrders=[],toastT=null,uploadFile=null,uploadForm={};
 let currentAuthTab='email';
+let userProfile={avatar:'👤',name:'',bio:'',commune:'',whatsapp:''};
 
 const fmt=n=>new Intl.NumberFormat('fr-CI').format(n)+' FCFA';
 
@@ -934,6 +972,46 @@ function authAction(){if(currentUser)signOutUser();else navigate('auth',null);}
 function settingsTap(){if(!currentUser){navigate('auth',null);return;}showToast('⚙️ Paramètres bientôt disponibles');}
 function showLegal(){const el=document.getElementById('legalSection');if(el){el.style.display='block';el.scrollIntoView({behavior:'smooth'});}}
 function hideLegal(){const el=document.getElementById('legalSection');if(el)el.style.display='none';}
+
+// PROFILE EDIT
+function openEditProfile(){
+  if(!currentUser){showToast('⚠️ Connectez-vous d\'abord');return;}
+  document.getElementById('editAvPreview').textContent=userProfile.avatar||'👤';
+  document.getElementById('editName').value=userProfile.name||currentUser.displayName||'';
+  document.getElementById('editBio').value=userProfile.bio||'';
+  document.getElementById('editCommune').value=userProfile.commune||'';
+  document.getElementById('editWhatsapp').value=userProfile.whatsapp||currentUser.phoneNumber||'';
+  document.getElementById('editProfileModal').classList.add('open');
+}
+function selectAvatar(emoji){
+  userProfile.avatar=emoji;
+  document.getElementById('editAvPreview').textContent=emoji;
+  document.querySelectorAll('#editProfileModal button').forEach(b=>{
+    if(b.textContent===emoji)b.style.borderColor='var(--or)';
+    else if(['👤','👨🏾','👩🏾','🧑🏾','👨🏿','👩🏿','🧔🏾','👸🏾','🤴🏾','🦸🏾','🦹🏾','🎭'].includes(b.textContent))b.style.borderColor='#2e2e2e';
+  });
+}
+async function saveProfile(){
+  const name=document.getElementById('editName').value.trim();
+  if(!name){showToast('⚠️ Entrez votre nom');return;}
+  userProfile={
+    avatar:userProfile.avatar||'👤',
+    name,
+    bio:document.getElementById('editBio').value.trim(),
+    commune:document.getElementById('editCommune').value.trim(),
+    whatsapp:document.getElementById('editWhatsapp').value.trim(),
+  };
+  if(FIREBASE_OK&&currentUser){
+    await db.collection('users').doc(currentUser.uid).set({
+      ...userProfile,updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true}).catch(()=>{});
+    // Update Firebase display name
+    await currentUser.updateProfile({displayName:name}).catch(()=>{});
+  }
+  updateProfileUI();
+  closeModal('editProfileModal');
+  showToast('✅ Profil mis à jour !');
+}
 function signOutUser(){
   if(auth)auth.signOut();
   currentUser=null;interests={};likedIds=new Set();myOrders=[];
@@ -944,10 +1022,19 @@ function signOutUser(){
 function updateProfileUI(){
   const nm=document.getElementById('profName');
   const sb=document.getElementById('profSub');
+  const av=document.getElementById('profAv');
   const aa=document.getElementById('authActionLbl');
-  if(nm)nm.textContent=currentUser?(currentUser.displayName||currentUser.email||currentUser.phoneNumber||'Utilisateur'):'Invité';
-  if(sb)sb.textContent=currentUser?(currentUser.email||currentUser.phoneNumber||'Connecté'):'Non connecté';
+  const displayName=userProfile.name||currentUser?.displayName||currentUser?.email?.split('@')[0]||currentUser?.phoneNumber||'Utilisateur';
+  const subText=userProfile.commune?(userProfile.commune+' · '+(currentUser?.email||'')):(currentUser?.email||currentUser?.phoneNumber||'Non connecté');
+  if(nm)nm.textContent=currentUser?displayName:'Invité';
+  if(sb)sb.textContent=currentUser?subText:'Non connecté';
+  if(av){av.textContent=userProfile.avatar||'👤';}
   if(aa)aa.textContent=currentUser?'🚪 Se déconnecter':'🔐 Se connecter';
+  // Update vendor name
+  const vn=document.getElementById('vnameDisplay');
+  if(vn&&currentUser)vn.textContent=(userProfile.name||currentUser.displayName||'Mon Showroom')+' <span style="color:var(--blue);font-size:14px">✓</span>';
+  const vs=document.getElementById('vsubDisplay');
+  if(vs&&currentUser)vs.textContent=(userProfile.commune||'Abidjan')+' · Vendeur VIVALY';
 }
 
 // ══════════════════════════════════════════════
@@ -964,7 +1051,20 @@ function loadProducts(){
 function loadUserData(){
   if(!currentUser||!FIREBASE_OK)return;
   db.collection('users').doc(currentUser.uid).get().then(doc=>{
-    if(doc.exists){interests=doc.data().interests||{};updateInterestUI();}
+    if(doc.exists){
+      const d=doc.data();
+      interests=d.interests||{};
+      if(d.name||d.avatar||d.commune){
+        userProfile={
+          avatar:d.avatar||'👤',
+          name:d.name||'',
+          bio:d.bio||'',
+          commune:d.commune||'',
+          whatsapp:d.whatsapp||'',
+        };
+      }
+      updateProfileUI();updateInterestUI();
+    }
   });
   db.collection('orders').where('clientId','==',currentUser.uid).orderBy('createdAt','desc').limit(10)
     .onSnapshot(snap=>{myOrders=snap.docs.map(d=>({id:d.id,...d.data()}));renderMyOrders();},()=>{});
@@ -1052,7 +1152,7 @@ function buildFeed(){
   ctr.innerHTML=feed.map((p,i)=>`
     <div class="slide ${i===0?'active':''}" id="slide-${i}">
       <div class="slide-bg" style="background:${p.gradient||'#1a1a1a'}"></div>
-      ${p.videoUrl?`<video class="slide-vid" src="${p.videoUrl}" autoplay muted loop playsinline></video>`:''}
+      ${p.videoUrl?`<video class="slide-vid" src="${p.videoUrl}" autoplay muted loop playsinline crossorigin="anonymous" preload="auto"></video>`:''}
       <div class="slide-ov"></div>
       <div class="slide-c">
         <div class="feed-top">
